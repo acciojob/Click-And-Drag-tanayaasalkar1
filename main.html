@@ -35,8 +35,8 @@
   </div>
 
 <script>
-//Your code goes here 
-	const container = document.querySelector(".items");
+
+const container = document.querySelector(".items");
 const cubes = document.querySelectorAll(".item");
 
 const cubeSize = 80;
@@ -47,13 +47,8 @@ let selectedCube = null;
 let offsetX = 0;
 let offsetY = 0;
 
-
-// -----------------------------------
-// Create initial grid
-// -----------------------------------
-
+// Initial grid setup
 cubes.forEach((cube, index) => {
-
   const row = Math.floor(index / columns);
   const column = index % columns;
 
@@ -61,127 +56,78 @@ cubes.forEach((cube, index) => {
   cube.style.width = `${cubeSize}px`;
   cube.style.height = `${cubeSize}px`;
 
-  cube.style.left =
-    `${column * (cubeSize + gap) + 20}px`;
-
-  cube.style.top =
-    `${row * (cubeSize + gap) + 20}px`;
-
+  cube.style.left = `${column * (cubeSize + gap) + 20}px`;
+  cube.style.top = `${row * (cubeSize + gap) + 20}px`;
 });
 
-
-// -----------------------------------
-// Mouse down
-// -----------------------------------
-
+// Start dragging
 cubes.forEach((cube) => {
-
-  cube.addEventListener("mousedown", (event) => {
-
+  cube.addEventListener("pointerdown", (event) => {
     selectedCube = cube;
 
-    const cubeRect = cube.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
+    const rect = cube.getBoundingClientRect();
 
-    // Mouse position inside the cube
-    offsetX = event.clientX - cubeRect.left;
-    offsetY = event.clientY - cubeRect.top;
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
 
     cube.style.zIndex = "1000";
+    cube.setPointerCapture(event.pointerId);
 
     event.preventDefault();
-
   });
 
+  cube.addEventListener("pointermove", (event) => {
+    if (selectedCube !== cube) return;
+
+    const containerRect = container.getBoundingClientRect();
+
+    const leftEdge = container.clientLeft;
+    const topEdge = container.clientTop;
+
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    const cubeWidth = cube.offsetWidth;
+    const cubeHeight = cube.offsetHeight;
+
+    // Calculate position inside the container
+    let left =
+      event.clientX - containerRect.left - leftEdge
+      + container.scrollLeft - offsetX;
+
+    let top =
+      event.clientY - containerRect.top - topEdge
+      + container.scrollTop - offsetY;
+
+    // Set maximum allowed positions
+    const maxLeft = containerWidth - cubeWidth;
+    const maxTop = containerHeight - cubeHeight;
+
+    // Restrict movement within boundaries
+    left = Math.max(0, Math.min(left, maxLeft));
+    top = Math.max(0, Math.min(top, maxTop));
+
+    // Apply new position
+    cube.style.left = `${left}px`;
+    cube.style.top = `${top}px`;
+  });
+
+  cube.addEventListener("pointerup", () => {
+    if (selectedCube === cube) {
+      cube.style.zIndex = "";
+      selectedCube = null;
+    }
+  });
+
+  cube.addEventListener("lostpointercapture", () => {
+    if (selectedCube === cube) {
+      cube.style.zIndex = "";
+      selectedCube = null;
+    }
+  });
 });
 
 
-// -----------------------------------
-// Mouse move
-// -----------------------------------
-
-document.addEventListener("mousemove", (event) => {
-
-  if (selectedCube === null) {
-    return;
-  }
-
-  const containerRect = container.getBoundingClientRect();
-  const cubeRect = selectedCube.getBoundingClientRect();
-
-  // Container border size
-  const borderLeft = container.clientLeft;
-  const borderTop = container.clientTop;
-
-  // Container's usable width and height
-  const containerWidth = container.clientWidth;
-  const containerHeight = container.clientHeight;
-
-  // Cube dimensions
-  const cubeWidth = cubeRect.width;
-  const cubeHeight = cubeRect.height;
-
-
-  // -----------------------------------
-  // Calculate mouse position
-  // -----------------------------------
-
-  let left =
-    event.clientX -
-    containerRect.left -
-    borderLeft -
-    offsetX;
-
-  let top =
-    event.clientY -
-    containerRect.top -
-    borderTop -
-    offsetY;
-
-
-  // -----------------------------------
-  // Calculate boundaries
-  // -----------------------------------
-
-  const minLeft = 0;
-  const minTop = 0;
-
-  const maxLeft = containerWidth - cubeWidth;
-  const maxTop = containerHeight - cubeHeight;
-
-
-  // -----------------------------------
-  // Keep cube completely inside
-  // -----------------------------------
-
-  left = Math.max(minLeft, Math.min(left, maxLeft));
-
-  top = Math.max(minTop, Math.min(top, maxTop));
-
-
-  // -----------------------------------
-  // Move cube
-  // -----------------------------------
-
-  selectedCube.style.left = `${left}px`;
-  selectedCube.style.top = `${top}px`;
-
-});
-
-
-// -----------------------------------
-// Mouse up
-// -----------------------------------
-
-document.addEventListener("mouseup", () => {
-
-  if (selectedCube !== null) {
-    selectedCube.style.zIndex = "";
-  }
-
-  selectedCube = null;
-
-});
 </script>
 
   </body>
